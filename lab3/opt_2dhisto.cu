@@ -24,17 +24,17 @@ __global__ void generate_hist(uint32_t* input, uint32_t* global_bins)
 
 	// Start calculating partial Histogram
 	for (int pos = Tid; pos < INPUT_HEIGHT * INPUT_WIDTH; pos += numThreads) {
-		//if (s_Hist[input[pos]] < 255) {
+		if (s_Hist[input[pos]] < 255) {
 			atomicAdd(s_Hist + input[pos], 1);
-		//}
+		}
 	}
 	__syncthreads();
 
 	//update global histogram
 	for(int pos = threadIdx.x; pos < BIN_COUNT; pos += numThreads) {
-		//if(global_bins[threadIdx.x] < 255) {
+		if(global_bins[threadIdx.x] < 255) {
 			atomicAdd(global_bins + pos, s_Hist[pos]);
-		//}
+		}
 	}
 }
 
