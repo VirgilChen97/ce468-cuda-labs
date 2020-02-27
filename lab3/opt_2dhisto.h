@@ -1,7 +1,7 @@
 #ifndef OPT_KERNEL
 #define OPT_KERNEL
 
-void opt_2dhisto(uint32_t* input, int, int, uint32_t* bins, uint8_t* D_bins);
+void opt_2dhisto(uint32_t* input, uint32_t* bins, uint8_t* D_bins);
 
 /* Include below the function headers of any other functions that you implement */
 
