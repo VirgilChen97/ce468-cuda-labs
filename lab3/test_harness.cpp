@@ -92,8 +92,9 @@ int main(int argc, char* argv[])
     uint8_t* d_bins = (uint8_t*)AllocateDevice(HISTO_HEIGHT * HISTO_WIDTH * sizeof(uint8_t));
     uint32_t* g_bins = (uint32_t*)AllocateDevice(HISTO_HEIGHT * HISTO_WIDTH * sizeof(uint32_t));
 
-    MemCpyToDevice(d_input, input[0], INPUT_WIDTH * INPUT_HEIGHT * sizeof(uint32_t));
-
+    for (int i = 0; i < INPUT_HEIGHT; ++i) {
+        MemCpyToDevice(d_input + i * INPUT_WIDTH, input[i], INPUT_WIDTH * sizeof(uint32_t));
+    }
 
     /* End of setup code */
 
