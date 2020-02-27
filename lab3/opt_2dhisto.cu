@@ -8,35 +8,32 @@
 
 #define BIN_COUNT 1024
 
-__global__ void generate_hist(uint32_t* input, size_t height, size_t width, uint32_t* global_bins)
+__global__ void generate_hist(uint32_t* input, uint32_t* global_bins)
 {
 	int Tid  = blockIdx.x * blockDim.x + threadIdx.x;
 	int numThreads = blockDim.x * gridDim.x;
 	
     // shared memory to store partial histogram data
-	__shared__ int local_hist[BIN_COUNT];	
+	__shared__ int s_Hist[BIN_COUNT];	
 
 	// Clear the buffer before using
-	#pragma unroll
-	for (int pos = threadIdx.x; pos < BIN_COUNT; pos += numThreads) {
-		local_hist[pos] = 0;
+	for (int pos = threadIdx.x; pos < BIN_COUNT; pos += blockDim.x) {
+		s_Hist[pos] = 0;
 	}
 	__syncthreads ();
 
 	// Start calculating partial Histogram
-	#pragma unroll
-	for (int pos = Tid; pos < height * width; pos += numThreads) {
-		if (local_hist[input[pos]] < 255) {
-			atomicAdd (local_hist + input[pos], 1);
+	for (int pos = Tid; pos < INPUT_HEIGHT * INPUT_WIDTH; pos += numThreads) {
+		if (s_Hist[input[pos]] < 255) {
+			atomicAdd(s_Hist + input[pos], 1);
 		}
 	}
 	__syncthreads();
 
 	//update global histogram
-	#pragma unroll
 	for(int pos = threadIdx.x; pos < BIN_COUNT; pos += numThreads) {
 		if(global_bins[threadIdx.x] < 255) {
-			atomicAdd(global_bins + pos, local_hist[pos]);
+			atomicAdd(global_bins + pos, s_Hist[pos]);
 		}
 	}
 }
@@ -74,15 +71,14 @@ void FreeDevice(void* addr)
 	cudaFree(addr);
 }
 
-void opt_2dhisto(uint32_t* device_input, int height, int width,  uint32_t* global_bins, uint8_t* device_bins)
+void opt_2dhisto(uint32_t* device_input, uint32_t* global_bins, uint8_t* device_bins)
 {
     /* This function should only contain a call to the GPU 
        histogramming kernel. Any memory allocations and
        transfers must be done outside this function */
     cudaMemset(global_bins, 0, HISTO_HEIGHT * HISTO_WIDTH * sizeof(uint32_t));
-    generate_hist<<<16, 1024>>>(device_input, height, width, global_bins);
+    generate_hist<<<16, 1024>>>(device_input, global_bins);
 	convertTo8<<<1, 1024>>>(global_bins, device_bins);
 	cudaThreadSynchronize();
-
 }
 

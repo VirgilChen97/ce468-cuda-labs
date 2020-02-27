@@ -88,26 +88,25 @@ int main(int argc, char* argv[])
             ref_2dhisto(input, INPUT_HEIGHT, INPUT_WIDTH, gold_bins);)
 
     /* Include your setup code below (temp variables, function calls, etc.) */
-    uint32_t* device_input = (uint32_t*)AllocateDevice(INPUT_HEIGHT * INPUT_WIDTH * sizeof(uint32_t));
-    uint32_t* global_bins = (uint32_t*)AllocateDevice(HISTO_HEIGHT * HISTO_WIDTH * sizeof(uint32_t));
-    uint8_t* device_bins = (uint8_t*)AllocateDevice(HISTO_HEIGHT * HISTO_WIDTH * sizeof(uint8_t));
+    uint32_t* d_input = (uint32_t*)AllocateDevice(INPUT_HEIGHT * INPUT_WIDTH * sizeof(uint32_t));
+    uint8_t* d_bins = (uint8_t*)AllocateDevice(HISTO_HEIGHT * HISTO_WIDTH * sizeof(uint8_t));
+    uint32_t* g_bins = (uint32_t*)AllocateDevice(HISTO_HEIGHT * HISTO_WIDTH * sizeof(uint32_t));
 
-    for (int i = 0; i < INPUT_HEIGHT; ++i) {
-        MemCpyToDevice(device_input + i * INPUT_WIDTH, input[i], INPUT_WIDTH * sizeof(uint32_t));
-    }
+    MemCpyToDevice(d_input, input[0], INPUT_WIDTH * INPUT_HEIGHT * sizeof(uint32_t));
+
 
     /* End of setup code */
 
     /* This is the call you will use to time your parallel implementation */
     TIME_IT("opt_2dhisto",
             1000,
-            opt_2dhisto(device_input, INPUT_HEIGHT, INPUT_WIDTH, global_bins, device_bins);)
+            opt_2dhisto(d_input, g_bins, d_bins);)
 
     /* Include your teardown code below (temporary variables, function calls, etc.) */
 
-    CopyFromDevice(kernel_bins, device_bins, HISTO_HEIGHT * HISTO_WIDTH * sizeof(uint8_t));
-    FreeDevice(device_bins);
-    FreeDevice(device_input);
+    CopyFromDevice(kernel_bins, d_bins, HISTO_HEIGHT * HISTO_WIDTH * sizeof(uint8_t));
+    FreeDevice(d_bins);
+    FreeDevice(d_input);
 
     /* End of teardown code */
 
